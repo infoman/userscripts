@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           LOR report message
 // @description    Add a 'Cast moderator' button to linux.org.ru
-// @version        0.5.2
+// @version        0.5.3
 // @license        GPL-2
 // @namespace      http://infoman.name/userscripts
 // @include        http://www.linux.org.ru/view-message.jsp*
