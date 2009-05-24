@@ -82,57 +82,57 @@ GMReportFunctions = {
 		}
 		if ($.GMReport.topicnum > 0)
 		{
-			letsGo();
+			GMReportFunctions.addbuttons();
 		}
+	},
+
+	// Add Report buttons to page
+	addbuttons: function()
+	{
+		$("div.title").each(function()
+		{
+			var div = $(this);
+			if (/^[^Ответ]/.test(div.html()))
+			{
+				div.append("[<a class='lor-report-msg' href='javascript:{/*Сообщить модератору (страница не будет перезагружена)*/}'>Настучать</a>]");
+			}
+		});
+
+		$("a.lor-report-msg").click(function()
+		{
+			var comment = window.prompt("Please provide a comment about this message", "5.1")
+			if (comment === null)
+			{
+				return false;
+			}
+
+			// Constructing message for posting
+			var msgtext = null;
+			var reportlink = $(this);
+			reportlink.parent().children("a").each(function()
+			{
+				if ($(this).html() == "#")
+				{
+					msgtext = this.href + "\n\n" + comment;
+				}
+			});
+			var message = {
+				session: /JSESSIONID=(\w+)/.exec(document.cookie)[1],
+				topic:    $.GMReport.topicnum,
+				title:    "Полуавтоматическое уведомление",
+				msg:      msgtext,
+				mode:     "quot",
+				autourl:  1,
+				texttype: 0
+			}
+			$.post("http://www.linux.org.ru/add_comment.jsp", message, function(data)
+			{
+				var allmsgs = $(data).find("div.msg");
+				var reportnum = /\d+/.exec(allmsgs.eq(allmsgs.length - 1).attr("id"))[0];
+				reportlink.unbind().attr("href", "http://www.linux.org.ru/jump-message.jsp?msgid=" + $.GMReport.topicnum + "&cid=" + reportnum).html("Просмотреть");
+			})
+
+		});
 	}
 }
 GMReportFunctions.gettopicnum();
-
-// All your GM code must be inside this function
-function letsGo()
-{
-	$("div.title").each(function()
-	{
-		var div = $(this);
-		if (/^[^Ответ]/.test(div.html()))
-		{
-			div.append("[<a class='lor-report-msg' href='javascript:{/*Сообщить модератору (страница не будет перезагружена)*/}'>Настучать</a>]");
-		}
-	});
-
-	$("a.lor-report-msg").click(function()
-	{
-		var comment = window.prompt("Please provide a comment about this message", "5.1")
-		if (comment === null)
-		{
-			return false;
-		}
-
-		// Constructing message for posting
-		var msgtext = null;
-		var reportlink = $(this);
-		reportlink.parent().children("a").each(function()
-		{
-			if ($(this).html() == "#")
-			{
-				msgtext = this.href + "\n\n" + comment;
-			}
-		});
-		var message = {
-			session: /JSESSIONID=(\w+)/.exec(document.cookie)[1],
-			topic:    $.GMReport.topicnum,
-			title:    "Полуавтоматическое уведомление",
-			msg:      msgtext,
-			mode:     "quot",
-			autourl:  1,
-			texttype: 0
-		}
-		$.post("http://www.linux.org.ru/add_comment.jsp", message, function(data)
-		{
-			var allmsgs = $(data).find("div.msg");
-			var reportnum = /\d+/.exec(allmsgs.eq(allmsgs.length - 1).attr("id"))[0];
-			reportlink.unbind().attr("href", "http://www.linux.org.ru/jump-message.jsp?msgid=" + $.GMReport.topicnum + "&cid=" + reportnum).html("Просмотреть");
-		})
-
-	});
-}
