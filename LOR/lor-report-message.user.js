@@ -17,94 +17,76 @@ function GM_wrap(f)
 	};
 }
 
-// Some code in the following is taken from http://www.joanpiedra.com/jquery/greasemonkey/
-// Add jQuery
-var GM_JQ = document.createElement('script');
-GM_JQ.src = 'http://jqueryjs.googlecode.com/files/jquery-1.2.3.pack.js';
-GM_JQ.type = 'text/javascript';
-document.getElementsByTagName('head')[0].appendChild(GM_JQ);
-// Check if jQuery's loaded
-function GM_wait()
-{
-	if (typeof unsafeWindow.jQuery == 'undefined')
+$ = unsafeWindow.jQuery.noConflict();
+
+$.GMReport = {
+	topicnum: null
+}
+
+GMReportFunctions = {
+	// Save topic number in cache
+	savetopicnum: GM_wrap(function()
 	{
-		window.setTimeout(GM_wait,100);
-	}
-	else
+		GM_setValue("topicnum", $.GMReport.topicnum);
+		GM_setValue("topictime", new Date().getTime().toString());
+	}),
+
+	fetchtopicnum: function()
 	{
-		$ = unsafeWindow.jQuery.noConflict();
-
-		$.GMReport = {
-			topicnum: null
-		}
-
-		GMReportFunctions = {
-			// Save topic number in cache
-			savetopicnum: GM_wrap(function()
-			{
-				GM_setValue("topicnum", $.GMReport.topicnum);
-				GM_setValue("topictime", new Date().getTime().toString());
-			}),
-
-			fetchtopicnum: function()
-			{
-				$.GMReport.topicnum = -1;
-				var req = new XMLHttpRequest();
-				req.open('GET', 'http://www.linux.org.ru/group.jsp?group=4068', true);
-				req.onreadystatechange = function (e) {
-					if (req.readyState == 4) {
-						if(req.status == 200)
-						{
-							$(req.responseText).find("img[alt='Прикреплено']").each(function()
-							{
-								var link = $(this).next("a");
-								if (/Ссылки.*некор/i.test(link.html()))
-								{
-									$.GMReport.topicnum = /msgid=(\d+)/.exec(link.attr("href"))[1];
-									GMReportFunctions.savetopicnum();
-								}
-							});
-						}
-						else
-						{
-							alert("Cannot get reports topic number");
-						}
-					}
-				}
-				req.send(null);
-			},
-
-			// Get topic number for sending reports
-			gettopicnum: function()
-			{
-				if ($.GMReport.topicnum == null)
+		$.GMReport.topicnum = -1;
+		var req = new XMLHttpRequest();
+		req.open('GET', 'http://www.linux.org.ru/group.jsp?group=4068', true);
+		req.onreadystatechange = function (e) {
+			if (req.readyState == 4) {
+				if(req.status == 200)
 				{
-					var num = GM_getValue("topicnum", null);
-					var time = new Number(GM_getValue("topictime", 0));
-					var cur = new Date().getTime();
-					if ((num != null) && ((cur - time) < 7200000))
+					$(req.responseText).find("img[alt='Прикреплено']").each(function()
 					{
-						$.GMReport.topicnum = num;
-					}
-					else
-					{
-						GMReportFunctions.fetchtopicnum();
-					}
+						var link = $(this).next("a");
+						if (/Ссылки.*некор/i.test(link.html()))
+						{
+							$.GMReport.topicnum = /msgid=(\d+)/.exec(link.attr("href"))[1];
+							GMReportFunctions.savetopicnum();
+						}
+					});
 				}
-				if ($.GMReport.topicnum == -1)
+				else
 				{
-					window.setTimeout(GMReportFunctions.gettopicnum, 100);
-				}
-				if ($.GMReport.topicnum > 0)
-				{
-					letsGo();
+					alert("Cannot get reports topic number");
 				}
 			}
 		}
-		GMReportFunctions.gettopicnum();
+		req.send(null);
+	},
+
+	// Get topic number for sending reports
+	gettopicnum: function()
+	{
+		if ($.GMReport.topicnum == null)
+		{
+			var num = GM_getValue("topicnum", null);
+			var time = new Number(GM_getValue("topictime", 0));
+			var cur = new Date().getTime();
+			if ((num != null) && ((cur - time) < 7200000))
+			{
+				$.GMReport.topicnum = num;
+			}
+			else
+			{
+				GMReportFunctions.fetchtopicnum();
+			}
+		}
+		if ($.GMReport.topicnum == -1)
+		{
+			window.setTimeout(GMReportFunctions.gettopicnum, 100);
+		}
+		if ($.GMReport.topicnum > 0)
+		{
+			letsGo();
+		}
 	}
 }
-GM_wait();
+GMReportFunctions.gettopicnum();
 
 // All your GM code must be inside this function
 function letsGo()
